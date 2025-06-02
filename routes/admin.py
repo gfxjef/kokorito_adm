@@ -11,7 +11,8 @@ TABLE_MAPPING = {
     'personal': 'kok_personal',
     'molde_rect': 'kok_molde_rect', 
     'molde_circular': 'kok_molde_circular',
-    'promo': 'kok_promo'
+    'promo': 'kok_promo',
+    'accesorios': 'kok_accesorios'
 }
 
 @admin_bp.route('/manage', methods=['GET'])

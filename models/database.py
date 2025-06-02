@@ -133,6 +133,17 @@ class Database:
                     disponible BOOLEAN DEFAULT TRUE,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
+            """,
+            'kok_accesorios': """
+                CREATE TABLE IF NOT EXISTS kok_accesorios (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    nombre VARCHAR(255) NOT NULL,
+                    descripcion TEXT NOT NULL,
+                    precio DECIMAL(10,2) NOT NULL,
+                    imagen TEXT NOT NULL,
+                    disponible BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
             """
         }
         
@@ -149,7 +160,7 @@ class Database:
     
     def verify_columns(self):
         """Verificar que todas las columnas existan, agregar 'disponible' si falta"""
-        tables_to_check = ['kok_personal', 'kok_molde_rect', 'kok_molde_circular', 'kok_promo']
+        tables_to_check = ['kok_personal', 'kok_molde_rect', 'kok_molde_circular', 'kok_promo', 'kok_accesorios']
         
         try:
             with self.connection.cursor() as cursor:

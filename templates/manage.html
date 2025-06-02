@@ -25,6 +25,7 @@
                         <option value="molde_rect">Molde Rectangular</option>
                         <option value="molde_circular">Molde Circular</option>
                         <option value="promo">Promociones</option>
+                        <option value="accesorios">Accesorios</option>
                     </select>
                 </div>
                 
@@ -478,7 +479,8 @@
             'personal': 'Productos Personales',
             'molde_rect': 'Moldes Rectangulares', 
             'molde_circular': 'Moldes Circulares',
-            'promo': 'Promociones'
+            'promo': 'Promociones',
+            'accesorios': 'Accesorios'
         };
         document.getElementById('products-title').textContent = titleMap[currentProductType] || 'Productos';
     }
@@ -533,7 +535,8 @@
             'personal': 'Personal',
             'molde_rect': 'Rectangular',
             'molde_circular': 'Circular',
-            'promo': 'Promoción'
+            'promo': 'Promoción',
+            'accesorios': 'Accesorio'
         };
         return typeLabels[productType] || productType;
     }

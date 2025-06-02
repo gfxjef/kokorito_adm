@@ -13,7 +13,8 @@ TABLE_MAPPING = {
     'personal': 'kok_personal',
     'molde_rect': 'kok_molde_rect', 
     'molde_circular': 'kok_molde_circular',
-    'promo': 'kok_promo'
+    'promo': 'kok_promo',
+    'accesorios': 'kok_accesorios'
 }
 
 @products_bp.route('/add', methods=['GET'])
@@ -224,10 +225,13 @@ def _prepare_product_data(product_type, form_data, image_urls):
     base_data = {
         'nombre': form_data.get('nombre'),
         'descripcion': form_data.get('descripcion'),
-        'categoria': form_data.get('categoria'),
         'imagen': image_urls,
         'precio': float(form_data.get('precio', 0))
     }
+    
+    # Solo agregar categoria si no es accesorios
+    if product_type != 'accesorios':
+        base_data['categoria'] = form_data.get('categoria')
     
     if product_type in ['personal', 'molde_rect', 'molde_circular']:
         base_data['sabor'] = form_data.get('sabor')
