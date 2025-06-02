@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Producto - Kokorito Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-light text-gray-900 mb-1">
+                    Editar Producto
+                </h1>
+                <p class="text-gray-600 text-sm">Modifica la información del producto</p>
+            </div>
+            <a href="/admin/manage" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                ← Volver a administrar
+            </a>
+        </div>
+    </div>
+
+    <!-- Product Form -->
+    <form id="product-form" class="bg-white rounded-lg border border-gray-200 p-6">
+        <input type="hidden" id="product-type" value="{{ product_type }}">
+        <input type="hidden" id="product-id" value="{{ product.id }}">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Nombre -->
+            <div class="md:col-span-2">
+                <label for="nombre" class="block text-sm text-gray-600 mb-2">
+                    Nombre del Producto *
+                </label>
+                <input type="text" id="nombre" name="nombre" required value="{{ product.nombre }}"
+                       class="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 text-sm">
+            </div>
+
+            <!-- Descripción -->
+            <div class="md:col-span-2">
+                <label for="descripcion" class="block text-sm text-gray-600 mb-2">
+                    Descripción *
+                </label>
+                <textarea id="descripcion" name="descripcion" rows="3" required
+                          class="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 text-sm">{{ product.descripcion }}</textarea>
+            </div>
+
+            <!-- Sabor (Personal, Molde Rect, Molde Circular) -->
+            {% if product_type in ['personal', 'molde_rect', 'molde_circular'] %}
+            <div>
+                <label for="sabor" class="block text-sm text-gray-600 mb-2">
+                    Sabor *
+                </label>
+                <input type="text" id="sabor" name="sabor" value="{{ product.sabor or '' }}"
+                       class="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 text-sm">
+            </div>
+            {% endif %}
+
+            <!-- Porciones (Molde Rect, Molde Circular) -->
+            {% if product_type in ['molde_rect', 'molde_circular'] %}
+            <div>
+                <label for="porciones" class="block text-sm text-gray-600 mb-2">
+                    Porciones *
+                </label>
+                <input type="number" id="porciones" name="porciones" min="1" value="{{ product.porciones or '' }}"
+                       class="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 text-sm">
+            </div>
+            {% endif %}
+
+            <!-- Tamaño de Molde (Solo Molde Circular) -->
+            {% if product_type == 'molde_circular' %}
+            <div>
+                <label for="tamaño_molde" class="block text-sm text-gray-600 mb-2">
+                    Tamaño del Molde (cm) *
+                </label>
+                <input type="number" id="tamaño_molde" name="tamaño_molde" step="0.01" min="0" value="{{ product.tamaño_molde or '' }}"
+                       class="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 text-sm">
+            </div>
+            {% endif %}
+
+            <!-- Categoría -->
+            <div>
+                <label for="categoria" class="block text-sm text-gray-600 mb-2">
+                    Categoría *
+                </label>
+                <input type="text" id="categoria" name="categoria" required value="{{ product.categoria }}"
+                       class="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 text-sm">
+            </div>
+
+            <!-- Precio -->
+            <div>
+                <label for="precio" class="block text-sm text-gray-600 mb-2">
+                    Precio *
+                </label>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">S/</span>
+                    <input type="number" id="precio" name="precio" step="0.01" min="0" required value="{{ product.precio }}"
+                           class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 text-sm">
+                </div>
+            </div>
+        </div>
+
+        <!-- Imágenes actuales -->
+        {% if product.imagen_list %}
+        <div class="mt-6">
+            <label class="block text-sm text-gray-600 mb-2">
+                Imágenes actuales
+            </label>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                {% for image_url in product.imagen_list %}
+                <div class="relative">
+                    <img src="{{ image_url }}" alt="Imagen del producto" class="w-full h-24 object-cover rounded-md border border-gray-200">
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Nuevas imágenes -->
+        <div class="mt-6">
+            <label class="block text-sm text-gray-600 mb-2">
+                Cambiar imágenes (opcional)
+            </label>
+            <div id="image-upload-area" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-400 transition-colors">
+                <div id="upload-placeholder">
+                    <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <p class="text-sm text-gray-600 mb-2">Selecciona nuevas imágenes para reemplazar las actuales</p>
+                    <p class="text-xs text-gray-500 mb-4">JPG, PNG, WEBP (máx. 1200px ancho)</p>
+                    <input type="file" id="images" name="images" multiple accept=".jpg,.jpeg,.png,.webp" class="hidden">
+                    <button type="button" onclick="document.getElementById('images').click()" 
+                            class="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors text-sm">
+                        Seleccionar Imágenes
+                    </button>
+                </div>
+                <div id="image-preview" class="hidden grid grid-cols-2 md:grid-cols-4 gap-4 mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Estado -->
+        <div class="mt-6">
+            <label class="flex items-center">
+                <input type="checkbox" id="disponible" name="disponible" {{ 'checked' if product.disponible else '' }}
+                       class="rounded border-gray-300 text-orange-500 focus:ring-orange-500 mr-2">
+                <span class="text-sm text-gray-600">Producto disponible</span>
+            </label>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="mt-8 flex justify-end space-x-3">
+            <a href="/admin/manage" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm">
+                Cancelar
+            </a>
+            <button type="submit" class="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors text-sm">
+                Guardar cambios
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let selectedFiles = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        setupImageUpload();
+        setupFormSubmission();
+    });
+
+    function setupImageUpload() {
+        const fileInput = document.getElementById('images');
+        const uploadArea = document.getElementById('image-upload-area');
+        const preview = document.getElementById('image-preview');
+        const placeholder = document.getElementById('upload-placeholder');
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('border-orange-400', 'bg-orange-50');
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('border-orange-400', 'bg-orange-50');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('border-orange-400', 'bg-orange-50');
+            const files = Array.from(e.dataTransfer.files);
+            handleFiles(files);
+        });
+    }
+
+    function handleFileSelect(e) {
+        const files = Array.from(e.target.files);
+        handleFiles(files);
+    }
+
+    function handleFiles(files) {
+        selectedFiles = files.filter(file => file.type.startsWith('image/'));
+        
+        if (selectedFiles.length > 0) {
+            showImagePreviews();
+        }
+    }
+
+    function showImagePreviews() {
+        const preview = document.getElementById('image-preview');
+        const placeholder = document.getElementById('upload-placeholder');
+        
+        preview.innerHTML = '';
+        selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const div = document.createElement('div');
+                div.className = 'relative';
+                div.innerHTML = `
+                    <img src="${e.target.result}" alt="Vista previa" class="w-full h-20 object-cover rounded-md border border-gray-200">
+                    <button type="button" onclick="removeImage(${index})" 
+                            class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs hover:bg-red-600">
+                        ×
+                    </button>
+                `;
+                preview.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        placeholder.classList.add('hidden');
+        preview.classList.remove('hidden');
+    }
+
+    function removeImage(index) {
+        selectedFiles.splice(index, 1);
+        if (selectedFiles.length > 0) {
+            showImagePreviews();
+        } else {
+            document.getElementById('image-preview').classList.add('hidden');
+            document.getElementById('upload-placeholder').classList.remove('hidden');
+        }
+    }
+
+    function setupFormSubmission() {
+        document.getElementById('product-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const productType = document.getElementById('product-type').value;
+            const productId = document.getElementById('product-id').value;
+            
+            // Agregar datos del formulario
+            formData.append('nombre', document.getElementById('nombre').value);
+            formData.append('descripcion', document.getElementById('descripcion').value);
+            formData.append('categoria', document.getElementById('categoria').value);
+            formData.append('precio', document.getElementById('precio').value);
+            formData.append('disponible', document.getElementById('disponible').checked);
+            
+            // Campos específicos por tipo
+            const saborField = document.getElementById('sabor');
+            if (saborField) formData.append('sabor', saborField.value);
+            
+            const porcionesField = document.getElementById('porciones');
+            if (porcionesField) formData.append('porciones', porcionesField.value);
+            
+            const tamanoField = document.getElementById('tamaño_molde');
+            if (tamanoField) formData.append('tamaño_molde', tamanoField.value);
+            
+            // Agregar imágenes si hay
+            selectedFiles.forEach(file => {
+                formData.append('images', file);
+            });
+            
+            try {
+                const response = await fetch(`/products/edit/${productType}/${productId}`, {
+                    method: 'PUT',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Producto editado exitosamente');
+                    window.location.href = '/admin/manage';
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión');
+            }
+        });
+    }
+</script>
+{% endblock %} 

@@ -21,6 +21,37 @@ def add_product_page():
     """Página para agregar productos"""
     return render_template('add_product.html')
 
+@products_bp.route('/edit/<product_type>/<int:product_id>', methods=['GET'])
+def edit_product_page(product_type, product_id):
+    """Página para editar producto"""
+    try:
+        if product_type not in TABLE_MAPPING:
+            return "Tipo de producto inválido", 400
+        
+        table_name = TABLE_MAPPING[product_type]
+        
+        # Obtener producto
+        product = db.execute_query(
+            f"SELECT * FROM {table_name} WHERE id = %s", 
+            (product_id,)
+        )
+        if not product:
+            return "Producto no encontrado", 404
+        
+        product = product[0]
+        
+        # Procesar imágenes
+        if product['imagen']:
+            product['imagen_list'] = product['imagen'].split(',')
+        else:
+            product['imagen_list'] = []
+        
+        return render_template('edit_product.html', product=product, product_type=product_type)
+        
+    except Exception as e:
+        logger.error(f"❌ Error obteniendo producto para edición: {e}")
+        return "Error interno del servidor", 500
+
 @products_bp.route('/add', methods=['POST'])
 def add_product():
     """Agregar nuevo producto según tipo de tabla"""

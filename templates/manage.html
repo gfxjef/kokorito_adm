@@ -7,13 +7,13 @@
     <div class="max-w-6xl mx-auto px-4 py-8">
         
         <!-- Header minimalista -->
-        <header class="mb-8">
-            <h1 class="text-2xl font-light text-gray-900 mb-2">Administrar Productos</h1>
+        <header class="mb-4">
+            <h1 class="text-xl font-light text-gray-900 mb-1">Administrar Productos</h1>
             <p class="text-gray-500 text-sm">Gestiona tu inventario de productos</p>
         </header>
 
         <!-- Selector y filtros minimalistas -->
-        <div class="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+        <div class="bg-white rounded-lg border border-gray-200 p-4 mb-4">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 
                 <!-- Selector de tipo -->
@@ -47,9 +47,9 @@
             </div>
         </div>
 
-        <!-- Estadísticas (cuando hay productos seleccionados) -->
-        <div id="stats-panel" class="hidden bg-white rounded-lg border border-gray-200 p-6 mb-8">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="current-stats">
+        <!-- Estadísticas compactas -->
+        <div id="stats-panel" class="hidden bg-white rounded-lg border border-gray-200 p-3 mb-4">
+            <div class="flex items-center justify-between text-sm" id="current-stats">
                 <!-- Las estadísticas se cargarán aquí -->
             </div>
         </div>
@@ -69,10 +69,10 @@
             </div>
             
             <!-- Grid de productos -->
-            <div id="products-grid" class="hidden p-6">
+            <div id="products-grid" class="hidden p-4">
                 
                 <!-- Header con título y acciones -->
-                <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center justify-between mb-4">
                     <h3 id="products-title" class="text-lg font-medium text-gray-900"></h3>
                     
                     <!-- Acciones masivas (ocultas por defecto) -->
@@ -87,7 +87,7 @@
                 </div>
                 
                 <!-- Seleccionar todos -->
-                <div class="mb-6">
+                <div class="mb-4">
                     <label class="flex items-center text-sm text-gray-600">
                         <input type="checkbox" id="select-all" class="rounded border-gray-300 text-orange-500 focus:ring-orange-500 mr-2">
                         Seleccionar todos
@@ -279,7 +279,7 @@
                         ` : ''}
                         
                         <!-- Precio -->
-                        <div class="text-lg font-semibold text-orange-600 mb-3">$${parseFloat(product.precio).toFixed(2)}</div>
+                        <div class="text-lg font-semibold text-orange-600 mb-3">S/ ${parseFloat(product.precio).toFixed(2)}</div>
 
                         <!-- Acciones -->
                         <div class="flex items-center justify-between">
@@ -501,28 +501,24 @@
         const unavailable = total - available;
         
         document.getElementById('current-stats').innerHTML = `
-            <div class="text-center">
-                <div class="text-2xl font-light text-gray-900 mb-1">${total}</div>
-                <div class="text-xs text-gray-500 uppercase tracking-wide">Total</div>
-            </div>
-            <div class="text-center">
-                <div class="text-2xl font-light text-green-600 mb-1">${available}</div>
-                <div class="text-xs text-gray-500 uppercase tracking-wide">Disponibles</div>
-            </div>
-            <div class="text-center">
-                <div class="text-2xl font-light text-red-500 mb-1">${unavailable}</div>
-                <div class="text-xs text-gray-500 uppercase tracking-wide">Inactivos</div>
-            </div>
-            <div class="text-center">
-                <div class="text-2xl font-light text-orange-600 mb-1">${selectedProducts.size}</div>
-                <div class="text-xs text-gray-500 uppercase tracking-wide">Seleccionados</div>
-            </div>
+            <span class="text-gray-600">
+                <strong class="text-gray-900">${total}</strong> Total
+            </span>
+            <span class="text-gray-600">
+                <strong class="text-green-600">${available}</strong> Disponibles
+            </span>
+            <span class="text-gray-600">
+                <strong class="text-red-500">${unavailable}</strong> Inactivos
+            </span>
+            <span class="text-gray-600">
+                <strong class="text-orange-600">${selectedProducts.size}</strong> Seleccionados
+            </span>
         `;
     }
 
-    // Función temporal para edición
+    // Función para editar producto
     function editProduct(productType, productId) {
-        showToast('Función de edición en desarrollo', 'info');
+        window.location.href = `/products/edit/${productType}/${productId}`;
     }
 
     // Función para mostrar notificaciones
