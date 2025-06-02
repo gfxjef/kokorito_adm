@@ -1,0 +1,545 @@
+{% extends "base.html" %}
+
+{% block title %}Administrar - Kokorito{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        
+        <!-- Header minimalista -->
+        <header class="mb-8">
+            <h1 class="text-2xl font-light text-gray-900 mb-2">Administrar Productos</h1>
+            <p class="text-gray-500 text-sm">Gestiona tu inventario de productos</p>
+        </header>
+
+        <!-- Selector y filtros minimalistas -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                
+                <!-- Selector de tipo -->
+                <div class="flex-1">
+                    <label class="text-sm text-gray-600 mb-2 block">Categoría</label>
+                    <select id="product-type-select" class="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 bg-white text-sm">
+                        <option value="all" selected>Todas las categorías</option>
+                        <option value="personal">Personal</option>
+                        <option value="molde_rect">Molde Rectangular</option>
+                        <option value="molde_circular">Molde Circular</option>
+                        <option value="promo">Promociones</option>
+                    </select>
+                </div>
+                
+                <!-- Búsqueda -->
+                <div class="flex-1">
+                    <label class="text-sm text-gray-600 mb-2 block">Buscar</label>
+                    <input type="text" id="search-input" placeholder="Nombre del producto..." 
+                           class="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 text-sm">
+                </div>
+                
+                <!-- Filtro de disponibilidad -->
+                <div class="flex-1">
+                    <label class="text-sm text-gray-600 mb-2 block">Estado</label>
+                    <select id="availability-filter" class="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 bg-white text-sm">
+                        <option value="">Todos</option>
+                        <option value="true">Disponibles</option>
+                        <option value="false">Inactivos</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas (cuando hay productos seleccionados) -->
+        <div id="stats-panel" class="hidden bg-white rounded-lg border border-gray-200 p-6 mb-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="current-stats">
+                <!-- Las estadísticas se cargarán aquí -->
+            </div>
+        </div>
+
+        <!-- Contenedor de productos -->
+        <div id="products-container" class="bg-white rounded-lg border border-gray-200">
+            
+            <!-- Placeholder inicial -->
+            <div id="products-placeholder" class="text-center py-20">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-600 mb-2">Selecciona una categoría</h3>
+                <p class="text-gray-400 text-sm">Elige una categoría para ver y gestionar tus productos</p>
+            </div>
+            
+            <!-- Grid de productos -->
+            <div id="products-grid" class="hidden p-6">
+                
+                <!-- Header con título y acciones -->
+                <div class="flex items-center justify-between mb-6">
+                    <h3 id="products-title" class="text-lg font-medium text-gray-900"></h3>
+                    
+                    <!-- Acciones masivas (ocultas por defecto) -->
+                    <div class="flex gap-2">
+                        <button id="bulk-activate-btn" class="hidden px-3 py-1.5 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors text-sm">
+                            Activar seleccionados
+                        </button>
+                        <button id="bulk-deactivate-btn" class="hidden px-3 py-1.5 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors text-sm">
+                            Desactivar seleccionados
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Seleccionar todos -->
+                <div class="mb-6">
+                    <label class="flex items-center text-sm text-gray-600">
+                        <input type="checkbox" id="select-all" class="rounded border-gray-300 text-orange-500 focus:ring-orange-500 mr-2">
+                        Seleccionar todos
+                    </label>
+                </div>
+                
+                <!-- Lista de productos -->
+                <div id="products-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <!-- Los productos se cargarán aquí -->
+                </div>
+                
+                <!-- Paginación -->
+                <div id="pagination" class="flex justify-center items-center gap-2 mt-8">
+                    <!-- Los botones de paginación se cargarán aquí -->
+                </div>
+            </div>
+            
+            <!-- Loading -->
+            <div id="products-loading" class="hidden text-center py-20">
+                <div class="animate-spin rounded-full h-8 w-8 border-2 border-orange-500 border-t-transparent mx-auto mb-4"></div>
+                <p class="text-gray-500 text-sm">Cargando productos...</p>
+            </div>
+            
+            <!-- Sin productos -->
+            <div id="no-products" class="hidden text-center py-20">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-600 mb-2">No hay productos</h3>
+                <p class="text-gray-400 text-sm mb-6">No se encontraron productos en esta categoría</p>
+                <a href="/products/add" class="inline-flex items-center px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors text-sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    Agregar producto
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let currentProductType = 'all'; // Por defecto mostrar todas las categorías
+    let currentPage = 1;
+    let selectedProducts = new Set();
+    let allProducts = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        setupEventListeners();
+        // Cargar todos los productos por defecto
+        loadProducts();
+    });
+
+    function setupEventListeners() {
+        // Selector de tipo de producto
+        document.getElementById('product-type-select').addEventListener('change', function() {
+            currentProductType = this.value;
+            currentPage = 1;
+            selectedProducts.clear();
+            if (currentProductType) {
+                loadProducts();
+            } else {
+                showPlaceholder();
+            }
+        });
+
+        // Búsqueda
+        let searchTimeout;
+        document.getElementById('search-input').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                currentPage = 1;
+                if (currentProductType) loadProducts();
+            }, 500);
+        });
+
+        // Filtro de disponibilidad
+        document.getElementById('availability-filter').addEventListener('change', function() {
+            currentPage = 1;
+            if (currentProductType) loadProducts();
+        });
+
+        // Seleccionar todos
+        document.getElementById('select-all').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.product-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = this.checked;
+                if (this.checked) {
+                    selectedProducts.add(parseInt(cb.value));
+                } else {
+                    selectedProducts.delete(parseInt(cb.value));
+                }
+            });
+            updateBulkActions();
+        });
+
+        // Acciones masivas
+        document.getElementById('bulk-activate-btn').addEventListener('click', () => bulkToggle(true));
+        document.getElementById('bulk-deactivate-btn').addEventListener('click', () => bulkToggle(false));
+    }
+
+    async function loadProducts() {
+        if (!currentProductType) return;
+
+        showLoading();
+        
+        try {
+            const params = new URLSearchParams({
+                page: currentPage,
+                per_page: 12,
+                search: document.getElementById('search-input').value,
+                disponible: document.getElementById('availability-filter').value
+            });
+
+            // Usar endpoint específico para "all" o el endpoint normal para categorías específicas
+            const endpoint = currentProductType === 'all' 
+                ? `/admin/products/all` 
+                : `/admin/products/${currentProductType}`;
+            
+            const response = await fetch(`${endpoint}?${params}`);
+            const data = await response.json();
+
+            if (data.success) {
+                allProducts = data.products;
+                displayProducts(data.products);
+                displayPagination(data.pagination);
+                updateStats();
+                showProductsGrid();
+            } else {
+                showToast(data.error || 'Error cargando productos', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error de conexión', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    function displayProducts(products) {
+        const container = document.getElementById('products-list');
+        
+        if (products.length === 0) {
+            showNoProducts();
+            return;
+        }
+
+        container.innerHTML = products.map(product => {
+            const isChecked = selectedProducts.has(product.id);
+            const statusClass = product.disponible ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50';
+            const statusText = product.disponible ? 'Disponible' : 'Inactivo';
+            const mainImage = product.imagen_list && product.imagen_list.length > 0 ? product.imagen_list[0] : '';
+
+            return `
+                <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-sm transition-shadow">
+                    <!-- Imagen -->
+                    ${mainImage ? `
+                        <img src="${mainImage}" alt="${product.nombre}" class="w-full h-32 object-cover">
+                    ` : `
+                        <div class="w-full h-32 bg-gray-100 flex items-center justify-center">
+                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                    `}
+
+                    <div class="p-4">
+                        <!-- Checkbox y estado -->
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="flex items-center">
+                                <input type="checkbox" class="product-checkbox rounded border-gray-300 text-orange-500 focus:ring-orange-500 mr-2" 
+                                       value="${product.id}" ${isChecked ? 'checked' : ''} onchange="toggleProductSelection(${product.id})">
+                                <span class="text-xs text-gray-500">#${product.id}</span>
+                            </label>
+                            <span class="px-2 py-1 ${statusClass} rounded-full text-xs font-medium">${statusText}</span>
+                        </div>
+
+                        <!-- Información del producto -->
+                        <h4 class="font-medium text-gray-900 mb-1 text-sm truncate">${product.nombre}</h4>
+                        <p class="text-xs text-gray-600 mb-2 line-clamp-2">${product.descripcion}</p>
+                        ${currentProductType === 'all' ? `
+                            <span class="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full mb-2">
+                                ${getProductTypeLabel(product.product_type)}
+                            </span>
+                        ` : ''}
+                        
+                        <!-- Precio -->
+                        <div class="text-lg font-semibold text-orange-600 mb-3">$${parseFloat(product.precio).toFixed(2)}</div>
+
+                        <!-- Acciones -->
+                        <div class="flex items-center justify-between">
+                            <!-- Toggle switch minimalista -->
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" ${product.disponible ? 'checked' : ''} 
+                                       onchange="toggleAvailability('${product.product_type || currentProductType}', ${product.id})"
+                                       class="sr-only peer">
+                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
+                            </label>
+
+                            <!-- Botones de acción -->
+                            <div class="flex gap-1">
+                                <button onclick="editProduct('${product.product_type || currentProductType}', ${product.id})" 
+                                        class="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                </button>
+                                <button onclick="deleteProduct('${product.product_type || currentProductType}', ${product.id}, '${product.nombre}')" 
+                                        class="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function displayPagination(pagination) {
+        const container = document.getElementById('pagination');
+        
+        if (pagination.total_pages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+
+        let buttons = [];
+        
+        // Botón anterior
+        if (pagination.has_prev) {
+            buttons.push(`<button onclick="changePage(${pagination.page - 1})" class="px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors text-sm">Anterior</button>`);
+        }
+
+        // Números de página
+        for (let i = Math.max(1, pagination.page - 2); i <= Math.min(pagination.total_pages, pagination.page + 2); i++) {
+            const isActive = i === pagination.page;
+            buttons.push(`<button onclick="changePage(${i})" class="px-3 py-1.5 border ${isActive ? 'bg-orange-500 text-white border-orange-500' : 'border-gray-300 hover:bg-gray-50'} rounded-md transition-colors text-sm">${i}</button>`);
+        }
+
+        // Botón siguiente
+        if (pagination.has_next) {
+            buttons.push(`<button onclick="changePage(${pagination.page + 1})" class="px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors text-sm">Siguiente</button>`);
+        }
+
+        container.innerHTML = buttons.join('');
+    }
+
+    function toggleProductSelection(productId) {
+        if (selectedProducts.has(productId)) {
+            selectedProducts.delete(productId);
+        } else {
+            selectedProducts.add(productId);
+        }
+        updateBulkActions();
+    }
+
+    function updateBulkActions() {
+        const activateBtn = document.getElementById('bulk-activate-btn');
+        const deactivateBtn = document.getElementById('bulk-deactivate-btn');
+        
+        if (selectedProducts.size > 0) {
+            activateBtn.classList.remove('hidden');
+            deactivateBtn.classList.remove('hidden');
+        } else {
+            activateBtn.classList.add('hidden');
+            deactivateBtn.classList.add('hidden');
+        }
+    }
+
+    async function toggleAvailability(productType, productId) {
+        try {
+            const response = await fetch(`/products/toggle/${productType}/${productId}`, {
+                method: 'POST'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast(data.message, 'success');
+                loadProducts();
+            } else {
+                showToast(data.error || 'Error cambiando disponibilidad', 'error');
+                loadProducts();
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error de conexión', 'error');
+            loadProducts();
+        }
+    }
+
+    async function deleteProduct(productType, productId, productName) {
+        if (confirm(`¿Estás seguro de eliminar "${productName}"? Esta acción no se puede deshacer.`)) {
+            try {
+                const response = await fetch(`/products/delete/${productType}/${productId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    selectedProducts.delete(productId);
+                    loadProducts();
+                } else {
+                    showToast(data.error || 'Error eliminando producto', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Error de conexión', 'error');
+            }
+        }
+    }
+
+    async function bulkToggle(newStatus) {
+        if (selectedProducts.size === 0) return;
+        
+        const action = newStatus ? 'activar' : 'desactivar';
+        if (confirm(`¿Estás seguro de ${action} ${selectedProducts.size} producto(s)?`)) {
+            try {
+                // Si estamos en vista "all", necesitamos agrupar productos por tipo
+                if (currentProductType === 'all') {
+                    // Para vista "all", deshabilitar bulk actions por ahora
+                    showToast('Las acciones masivas no están disponibles en vista "Todas las categorías". Filtra por categoría específica.', 'warning');
+                    return;
+                }
+                
+                const response = await fetch('/admin/bulk-toggle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        product_type: currentProductType,
+                        product_ids: Array.from(selectedProducts),
+                        available: newStatus
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    selectedProducts.clear();
+                    document.getElementById('select-all').checked = false;
+                    loadProducts();
+                } else {
+                    showToast(data.error || 'Error en operación masiva', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Error de conexión', 'error');
+            }
+        }
+    }
+
+    function changePage(page) {
+        currentPage = page;
+        loadProducts();
+    }
+
+    function showLoading() {
+        document.getElementById('products-loading').classList.remove('hidden');
+        document.getElementById('products-grid').classList.add('hidden');
+        document.getElementById('no-products').classList.add('hidden');
+        document.getElementById('products-placeholder').classList.add('hidden');
+    }
+
+    function hideLoading() {
+        document.getElementById('products-loading').classList.add('hidden');
+    }
+
+    function showProductsGrid() {
+        document.getElementById('products-grid').classList.remove('hidden');
+        document.getElementById('products-placeholder').classList.add('hidden');
+        document.getElementById('no-products').classList.add('hidden');
+        document.getElementById('stats-panel').classList.remove('hidden');
+        
+        const titleMap = {
+            'all': 'Todos los Productos',
+            'personal': 'Productos Personales',
+            'molde_rect': 'Moldes Rectangulares', 
+            'molde_circular': 'Moldes Circulares',
+            'promo': 'Promociones'
+        };
+        document.getElementById('products-title').textContent = titleMap[currentProductType] || 'Productos';
+    }
+
+    function showNoProducts() {
+        document.getElementById('no-products').classList.remove('hidden');
+        document.getElementById('products-grid').classList.add('hidden');
+    }
+
+    function showPlaceholder() {
+        document.getElementById('products-placeholder').classList.remove('hidden');
+        document.getElementById('products-grid').classList.add('hidden');
+        document.getElementById('no-products').classList.add('hidden');
+        document.getElementById('stats-panel').classList.add('hidden');
+    }
+
+    async function updateStats() {
+        const total = allProducts.length;
+        const available = allProducts.filter(p => p.disponible).length;
+        const unavailable = total - available;
+        
+        document.getElementById('current-stats').innerHTML = `
+            <div class="text-center">
+                <div class="text-2xl font-light text-gray-900 mb-1">${total}</div>
+                <div class="text-xs text-gray-500 uppercase tracking-wide">Total</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-light text-green-600 mb-1">${available}</div>
+                <div class="text-xs text-gray-500 uppercase tracking-wide">Disponibles</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-light text-red-500 mb-1">${unavailable}</div>
+                <div class="text-xs text-gray-500 uppercase tracking-wide">Inactivos</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-light text-orange-600 mb-1">${selectedProducts.size}</div>
+                <div class="text-xs text-gray-500 uppercase tracking-wide">Seleccionados</div>
+            </div>
+        `;
+    }
+
+    // Función temporal para edición
+    function editProduct(productType, productId) {
+        showToast('Función de edición en desarrollo', 'info');
+    }
+
+    // Función para mostrar notificaciones
+    function showToast(message, type) {
+        console.log(`${type.toUpperCase()}: ${message}`);
+        // Aquí puedes implementar un sistema de notificaciones más elaborado
+    }
+
+    // Función para obtener etiqueta legible del tipo de producto
+    function getProductTypeLabel(productType) {
+        const typeLabels = {
+            'personal': 'Personal',
+            'molde_rect': 'Rectangular',
+            'molde_circular': 'Circular',
+            'promo': 'Promoción'
+        };
+        return typeLabels[productType] || productType;
+    }
+</script>
+{% endblock %} 
