@@ -83,7 +83,10 @@ def add_product():
             return jsonify({'error': 'Error subiendo imágenes'}), 500
         
         # Preparar datos según tipo de producto
-        product_data = _prepare_product_data(product_type, request.form, image_urls)
+        try:
+            product_data = _prepare_product_data(product_type, request.form, image_urls)
+        except ValueError as ve:
+            return jsonify({'error': str(ve)}), 400
         
         # Insertar en base de datos
         query, values = _build_insert_query(table_name, product_data)
@@ -96,6 +99,9 @@ def add_product():
             'product_id': product_id
         })
         
+    except ValueError as ve:
+        logger.error(f"❌ Error de validación: {ve}")
+        return jsonify({'error': str(ve)}), 400
     except Exception as e:
         logger.error(f"❌ Error agregando producto: {e}")
         return jsonify({'error': 'Error interno del servidor'}), 500
@@ -136,7 +142,10 @@ def edit_product(product_type, product_id):
             image_urls = s3_handler.upload_multiple_files(processed_files)
         
         # Preparar datos actualizados
-        product_data = _prepare_product_data(product_type, request.form, image_urls)
+        try:
+            product_data = _prepare_product_data(product_type, request.form, image_urls)
+        except ValueError as ve:
+            return jsonify({'error': str(ve)}), 400
         
         # Actualizar en base de datos
         query, values = _build_update_query(table_name, product_data, product_id)
@@ -148,6 +157,9 @@ def edit_product(product_type, product_id):
             'message': 'Producto editado exitosamente'
         })
         
+    except ValueError as ve:
+        logger.error(f"❌ Error de validación editando: {ve}")
+        return jsonify({'error': str(ve)}), 400
     except Exception as e:
         logger.error(f"❌ Error editando producto: {e}")
         return jsonify({'error': 'Error interno del servidor'}), 500
@@ -222,27 +234,58 @@ def toggle_availability(product_type, product_id):
 
 def _prepare_product_data(product_type, form_data, image_urls):
     """Preparar datos según tipo de producto"""
-    base_data = {
-        'nombre': form_data.get('nombre'),
-        'descripcion': form_data.get('descripcion'),
-        'imagen': image_urls,
-        'precio': float(form_data.get('precio', 0))
-    }
-    
-    # Solo agregar categoria si no es accesorios
-    if product_type != 'accesorios':
-        base_data['categoria'] = form_data.get('categoria')
-    
-    if product_type in ['personal', 'molde_rect', 'molde_circular']:
-        base_data['sabor'] = form_data.get('sabor')
-    
-    if product_type in ['molde_rect', 'molde_circular']:
-        base_data['porciones'] = int(form_data.get('porciones', 0))
-    
-    if product_type == 'molde_circular':
-        base_data['tamaño_molde'] = float(form_data.get('tamaño_molde', 0))
-    
-    return base_data
+    try:
+        base_data = {
+            'nombre': form_data.get('nombre', '').strip(),
+            'descripcion': form_data.get('descripcion', '').strip(),
+            'imagen': image_urls,
+            'precio': float(form_data.get('precio', 0))
+        }
+        
+        # Validaciones básicas
+        if not base_data['nombre']:
+            raise ValueError("Nombre es requerido")
+        if not base_data['descripcion']:
+            raise ValueError("Descripción es requerida")
+        if base_data['precio'] <= 0:
+            raise ValueError("Precio debe ser mayor a 0")
+        
+        # Solo agregar categoria si no es accesorios
+        if product_type != 'accesorios':
+            categoria = form_data.get('categoria', '').strip()
+            if not categoria:
+                raise ValueError("Categoría es requerida para este tipo de producto")
+            base_data['categoria'] = categoria
+        
+        if product_type in ['personal', 'molde_rect', 'molde_circular']:
+            sabor = form_data.get('sabor', '').strip()
+            if not sabor:
+                raise ValueError("Sabor es requerido para este tipo de producto")
+            base_data['sabor'] = sabor
+        
+        if product_type in ['molde_rect', 'molde_circular']:
+            try:
+                porciones = int(form_data.get('porciones', 0))
+                if porciones <= 0:
+                    raise ValueError("Porciones debe ser mayor a 0")
+                base_data['porciones'] = porciones
+            except (ValueError, TypeError):
+                raise ValueError("Porciones debe ser un número válido")
+        
+        if product_type == 'molde_circular':
+            try:
+                tamano = float(form_data.get('tamaño_molde', 0))
+                if tamano <= 0:
+                    raise ValueError("Tamaño del molde debe ser mayor a 0")
+                base_data['tamaño_molde'] = tamano
+            except (ValueError, TypeError):
+                raise ValueError("Tamaño del molde debe ser un número válido")
+        
+        return base_data
+        
+    except Exception as e:
+        logger.error(f"❌ Error preparando datos para {product_type}: {e}")
+        raise e
 
 def _build_insert_query(table_name, data):
     """Construir query INSERT"""
