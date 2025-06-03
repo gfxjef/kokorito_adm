@@ -1,0 +1,15 @@
+{
+  "name": "kokorito",
+  "version": "1.0.0",
+  "description": "Sistema web completo para administrar productos de repostería con integración a AWS S3, MySQL y interfaz 100% responsive.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "tailwindcss": "^4.1.8"
+  }
+}
